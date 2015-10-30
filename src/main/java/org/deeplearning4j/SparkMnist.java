@@ -12,11 +12,8 @@ import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
-import org.deeplearning4j.nn.conf.layers.RBM;
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.conf.layers.setup.ConvolutionLayerSetup;
-import org.deeplearning4j.nn.conf.override.ConfOverride;
-import org.deeplearning4j.nn.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.spark.canova.RecordReaderFunction;
@@ -26,9 +23,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.util.Collections;
 
 /**
  * Created by agibsonccc on 9/23/15.
@@ -37,7 +32,7 @@ public class SparkMnist {
 
     public static void main(String[] args) throws Exception {
         // set to test mode
-        SparkConf sparkConf = new SparkConf().set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, "false")
+        SparkConf sparkConf = new SparkConf().set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, "false").set("spark.executor.memory", "3g")
                 .setAppName("sparktest");
 
         final int numRows = 28;
@@ -77,8 +72,6 @@ public class SparkMnist {
         new ConvolutionLayerSetup(builder,28,28,1);
 
         MultiLayerConfiguration conf = builder.build();
-        MultiLayerNetwork model = new MultiLayerNetwork(conf);
-        model.init();
 
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
@@ -102,7 +95,7 @@ public class SparkMnist {
         Evaluation eval = new Evaluation(10);
         while(iter.hasNext()) {
             DataSet next = iter.next();
-            eval.eval(next.getLabels(),model.output(next.getFeatureMatrix(), true));
+            eval.eval(next.getLabels(),network2.output(next.getFeatureMatrix(), true));
         }
 
         System.out.println(eval.stats());
